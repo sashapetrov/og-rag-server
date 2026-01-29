@@ -1,0 +1,11 @@
+# Исключаем только действительно ненужное
+.git/
+__pycache__/
+*.pyc
+.DS_Store
+logs/
+data/
+backups/
+.claude/
+.vscode/
+*.tmp

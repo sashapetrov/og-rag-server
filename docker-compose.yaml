@@ -1,0 +1,92 @@
+# docker-compose.yml - OG RAG Server
+# Configurable RAG server with ChromaDB and auto-indexing
+version: '3.8'
+
+services:
+  og-rag-server:
+    build: .
+    image: og-rag-server:latest
+    container_name: og-rag-server
+    restart: unless-stopped
+    ports:
+      - "45000:5000"
+    volumes:
+      - rag_data:/app/data
+      - rag_backups:/app/backups
+      - rag_models:/app/data/models
+      - ./documents:/app/data/documents:rw
+      - ./logs:/app/logs:rw
+    environment:
+      # =================================================================
+      # EMBEDDING MODEL CONFIGURATION
+      # =================================================================
+      # Recommended models:
+      #   all-MiniLM-L6-v2                    - EN optimized, 384 dim, fast (default)
+      #   intfloat/multilingual-e5-base       - best for RU/EN, 768 dim, slower
+      #   paraphrase-multilingual-MiniLM-L12-v2 - multilingual, 384 dim
+      #   cointegrated/rubert-tiny2           - RU only, 312 dim, fastest
+      - EMBEDDING_MODEL=all-MiniLM-L6-v2
+
+      # =================================================================
+      # CHUNKING CONFIGURATION
+      # =================================================================
+      # Recommendations by content type:
+      #   Technical docs: CHUNK_SIZE=800,  CHUNK_OVERLAP=150
+      #   Books/novels:   CHUNK_SIZE=1500, CHUNK_OVERLAP=300
+      #   Short FAQ:      CHUNK_SIZE=500,  CHUNK_OVERLAP=100
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
+
+      # =================================================================
+      # SYSTEM CONFIGURATION
+      # =================================================================
+      # Python settings
+      - PYTHONUNBUFFERED=1
+      - DEBIAN_FRONTEND=noninteractive
+
+      # Model cache paths (for offline/autonomous operation)
+      # HF_HOME is the primary cache for HuggingFace (transformers v5+)
+      - HF_HOME=/app/data/models
+      - HUGGINGFACE_HUB_CACHE=/app/data/models
+      - SENTENCE_TRANSFORMERS_HOME=/app/data/models
+      - TORCH_HOME=/app/data/models
+
+      # Online mode for initial model download, then autonomous
+      - TRANSFORMERS_OFFLINE=0
+      - HF_DATASETS_OFFLINE=0
+      - HF_HUB_DISABLE_TELEMETRY=1
+
+      # Enhanced server features
+      - AUTONOMOUS_MODE=true
+      - ENHANCED_FEATURES=true
+
+      # =================================================================
+      # BACKUP CONFIGURATION
+      # =================================================================
+      - BACKUP_ENABLED=false
+      - BACKUP_RETENTION_DAYS=1
+      - BACKUP_INTERVAL_HOURS=6
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - rag-network
+
+volumes:
+  rag_data:
+    name: rag_enhanced_persistent_data
+    driver: local
+  rag_backups:
+    name: rag_enhanced_backup_storage
+    driver: local
+  rag_models:
+    name: rag_enhanced_models_cache
+    driver: local
+
+networks:
+  rag-network:
+    name: rag_enhanced_internal_network
+    driver: bridge

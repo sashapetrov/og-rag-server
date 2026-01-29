@@ -1,0 +1,18 @@
+# OG RAG Server Dependencies
+chromadb>=0.4.15
+langchain>=0.2.19
+langchain-community>=0.2.19
+langchain-huggingface>=0.1.2
+langchain-chroma>=0.1.2
+sentence-transformers>=3.0.0
+pypdf>=6.1.2
+python-docx>=1.1.0
+markdown>=3.4.0
+ebooklib>=0.18
+lxml>=4.9.0
+transformers>=4.40.0
+torch>=2.0.0
+flask>=2.3.0
+flask-cors>=4.0.0
+requests>=2.31.0
+watchdog>=3.0.0
